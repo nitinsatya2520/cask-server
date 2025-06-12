@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: bakery-backend
+    env: python
+    buildCommand: ""
+    startCommand: gunicorn app:app
+    envVars:
+      - key: SECRET_KEY
+        value: your_flask_secret_key
+      - key: GOOGLE_SHEETS_CREDS_B64
+        value: (paste base64-encoded JSON here without quotes or spaces)
