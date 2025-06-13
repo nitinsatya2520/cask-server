@@ -102,3 +102,26 @@ def delete_product(product_id):
         ).execute()
 
     return jsonify({"message": "Product deleted successfully"}), 200
+
+# 📁 admin_routes.py
+@admin_bp.route("/admin/orders", methods=["GET"])
+@admin_required
+def get_orders():
+    sheet = get_sheets_service()
+    orders_range = "Orders!A2:G"  # Adjust as per your Sheet structure
+    result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=orders_range).execute()
+    rows = result.get("values", [])
+
+    orders = []
+    for row in rows:
+        orders.append({
+            "name": row[0] if len(row) > 0 else "",
+            "phone": row[1] if len(row) > 1 else "",
+            "address": row[2] if len(row) > 2 else "",
+            "cartItems": json.loads(row[3]) if len(row) > 3 else [],
+            "total": row[4] if len(row) > 4 else "",
+            "timestamp": row[5] if len(row) > 5 else "",
+            "transactionId": row[6] if len(row) > 6 else "",
+        })
+
+    return jsonify(orders), 200
