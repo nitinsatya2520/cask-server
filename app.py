@@ -2,17 +2,19 @@ from flask import Flask
 from routes.auth import auth_bp
 from routes.products import products_bp
 from routes.admin import admin_bp
-from flask_cors import CORS  # Important if frontend is hosted separately
+from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 from routes.save_transaction import save_bp
 
 app = Flask(__name__)
-CORS(app)  # Allow requests from React frontend
-load_dotenv()  # This loads the .env file
+load_dotenv()  # Load env variables
 
-# This line will now work:
-GOOGLE_SHEETS_CREDS_B64 = os.getenv("GOOGLE_SHEETS_CREDS_B64")
+# ✅ Correct CORS setup for frontend at localhost:3000
+CORS(app, supports_credentials=True, expose_headers=["Authorization"], resources={
+    r"/api/*": {"origins": "http://localhost:3000"}
+})
+
 # Register Blueprints
 app.register_blueprint(auth_bp, url_prefix="/api")
 app.register_blueprint(products_bp, url_prefix="/api")

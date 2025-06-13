@@ -3,8 +3,9 @@ from functools import wraps
 from flask import request, jsonify
 import jwt
 import logging
-
-SECRET_KEY = "your_secret_key"  # Make sure this matches the one in auth.py
+import os
+import datetime
+SECRET_KEY = os.getenv("SECRET_KEY", "default-secret")  # Use this at top
 
 # Enable basic logging
 logging.basicConfig(level=logging.INFO)
@@ -57,3 +58,12 @@ def admin_required(f):
 
         return f(*args, **kwargs)
     return decorated
+
+
+def create_jwt_token(user_id, role):
+    payload = {
+        "user_id": user_id,
+        "role": role,
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=12)
+    }
+    return jwt.encode(payload, SECRET_KEY, algorithm="HS256")

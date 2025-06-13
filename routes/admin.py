@@ -2,10 +2,15 @@ from flask import Blueprint, request, jsonify
 from utils.google_sheets import get_sheets_service
 from utils.auth_utils import admin_required
 import json
+from utils.auth_utils import create_jwt_token
+
 
 admin_bp = Blueprint("admin", __name__)
 SPREADSHEET_ID = "1FxBCA_JnwtsJgo_sKxFGjg-aFiK9R6JtUR3AfFMyjuk"
 PRODUCTS_RANGE = "Products!A2:G"
+
+
+
 
 # ➕ Add new product
 @admin_bp.route("/admin/add-product", methods=["POST"])
@@ -121,7 +126,17 @@ def get_orders():
             "cartItems": json.loads(row[3]) if len(row) > 3 else [],
             "total": row[4] if len(row) > 4 else "",
             "timestamp": row[5] if len(row) > 5 else "",
-            "transactionId": row[6] if len(row) > 6 else "",
+            "transactionId": row[7] if len(row) > 7 else "",
         })
 
     return jsonify(orders), 200
+
+@admin_bp.route("/admin/login", methods=["POST"])
+def admin_login():
+    data = request.get_json()
+    if data.get("password") == "Nitin":
+        token = create_jwt_token(user_id="admin_user", role="admin")
+        return jsonify({"token": token})
+    else:
+        return jsonify({"message": "Unauthorized"}), 401
+
