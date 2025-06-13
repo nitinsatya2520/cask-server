@@ -12,7 +12,7 @@ load_dotenv()  # Load env variables
 
 # ✅ Correct CORS setup for frontend at localhost:3000
 CORS(app, supports_credentials=True, expose_headers=["Authorization"], resources={
-    r"/api/*": {"origins": ["http://localhost:3000", "https://cake-admin.vercel.app"]}})
+    r"/api/*": {"origins": ["http://localhost:3000", "https://cake-client-kappa.vercel.app","https://cake-admin.vercel.app"]}})
 
 
 # Register Blueprints
