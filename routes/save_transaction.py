@@ -1,22 +1,23 @@
-# routes/save_transaction.py
 from flask import request, Blueprint, jsonify
+from flask_cors import cross_origin
 from datetime import datetime
 from utils.google_sheets import get_sheets_service
 
 save_bp = Blueprint('save_transaction', __name__)
 
-SPREADSHEET_ID = "1FxBCA_JnwtsJgo_sKxFGjg-aFiK9R6JtUR3AfFMyjuk"
-ORDER_RANGE = "Orders!A2:G"  # Existing data range (no header)
-
-@save_bp.route('/api/save-transaction', methods=['POST'])
+@save_bp.route('/save-transaction', methods=['POST', 'OPTIONS'])
+@cross_origin()
 def save_transaction():
-    data = request.get_json()
+    if request.method == 'OPTIONS':
+        return '', 200  # CORS preflight response
 
+    data = request.get_json()
     if not data:
         return jsonify({"error": "No data received"}), 400
 
     try:
-        # Prepare data
+        sheet = get_sheets_service()
+        spreadsheet_id = "1FxBCA_JnwtsJgo_sKxFGjg-aFiK9R6JtUR3AfFMyjuk"
         name = data.get('name', '')
         phone = data.get('phone', '')
         address = data.get('address', '')
@@ -24,13 +25,12 @@ def save_transaction():
         cart_items = ', '.join([f"{item['name']} x{item['quantity']}" for item in data.get('cartItems', [])])
         timestamp = data.get('timestamp', datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
-        # Append row using Google Sheets API
-        sheet = get_sheets_service()
+        values = [[name, phone, address, total, cart_items, timestamp]]
         sheet.values().append(
-            spreadsheetId=SPREADSHEET_ID,
-            range="Orders!A:G",
+            spreadsheetId=spreadsheet_id,
+            range="Orders!A2",
             valueInputOption="RAW",
-            body={"values": [[name, phone, address, total, cart_items, timestamp]]}
+            body={"values": values}
         ).execute()
 
         return jsonify({"status": "success"}), 200
@@ -39,8 +39,12 @@ def save_transaction():
         return jsonify({"error": str(e)}), 500
 
 
-@save_bp.route('/api/save-transaction-id', methods=['POST'])
+@save_bp.route('/save-transaction-id', methods=['POST', 'OPTIONS'])
+@cross_origin()
 def save_transaction_id():
+    if request.method == 'OPTIONS':
+        return '', 200  # CORS preflight response
+
     data = request.get_json()
     phone = data.get("phone")
     transaction_id = data.get("transactionId")
@@ -50,14 +54,15 @@ def save_transaction_id():
 
     try:
         sheet = get_sheets_service()
-        result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=ORDER_RANGE).execute()
+        spreadsheet_id = "1FxBCA_JnwtsJgo_sKxFGjg-aFiK9R6JtUR3AfFMyjuk"
+        result = sheet.values().get(spreadsheetId=spreadsheet_id, range="Orders!A2:G").execute()
         rows = result.get("values", [])
 
         for idx, row in enumerate(rows):
             if len(row) >= 2 and row[1] == phone:
-                row_index = idx + 2  # Adjust for header row
+                row_index = idx + 2
                 sheet.values().update(
-                    spreadsheetId=SPREADSHEET_ID,
+                    spreadsheetId=spreadsheet_id,
                     range=f"Orders!H{row_index}",
                     valueInputOption="RAW",
                     body={"values": [[transaction_id]]}
